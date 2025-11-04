@@ -61,6 +61,7 @@ export default function UsersPage() {
     email: "",
     phone: "",
     role: "customer" as "customer" | "admin",
+    password: "",
   })
 
   useEffect(() => {
@@ -118,6 +119,7 @@ export default function UsersPage() {
       email: "",
       phone: "",
       role: "customer",
+      password: "",
     })
     setIsAddModalOpen(true)
   }
@@ -128,6 +130,7 @@ export default function UsersPage() {
       email: user.email,
       phone: user.phone || "",
       role: user.role as "customer" | "admin",
+      password: "",
     })
     setEditingUser(user)
     setIsEditModalOpen(true)
@@ -154,8 +157,9 @@ export default function UsersPage() {
         await apiClient.updateUser(editingUser.id, formData)
         setIsEditModalOpen(false)
       } else {
-        // Add new user
-        await apiClient.createUser(formData)
+        // Add new user (call /auth/register)
+        const { userName, email, phone, role, password } = formData;
+        await apiClient.registerUser({ userName, email, phone, role, password });
         setIsAddModalOpen(false)
       }
       fetchUsers()
@@ -343,6 +347,19 @@ export default function UsersPage() {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="col-span-3"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="password" className="text-right">
+                  Password
+                </Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   className="col-span-3"
                   required
                 />

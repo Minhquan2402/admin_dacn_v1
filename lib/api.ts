@@ -57,8 +57,10 @@ class ApiClient {
     return this.request(`/users/${id}`)
   }
 
-  async createUser(data: any) {
-    return this.request('/users', {
+
+  // Đăng ký user qua /auth/register
+  async registerUser(data: any) {
+    return this.request('/auth/register', {
       method: 'POST',
       body: JSON.stringify(data),
     })

@@ -92,7 +92,6 @@
           limit: 10,
           search: searchTerm,
         })
-        // Map lại dữ liệu từ API về đúng định dạng Product FE
         const mappedProducts = (response.data || []).map((item: any) => ({
           id: item.id || item._id,
           name: item.name,
@@ -113,43 +112,6 @@
         setTotalPages(response.pagination?.totalPages || 1)
       } catch (error) {
         console.error('Failed to fetch products:', error)
-        // Mock data for demo
-        setProducts([
-          {
-            id: '1',
-            name: 'Cà chua bi',
-            nameEn: 'Cherry Tomatoes',
-            description: 'Cà chua bi tươi ngon, giàu vitamin C',
-            price: 45000,
-            originalPrice: 50000,
-            category: {
-              id: '1',
-              name: 'Rau củ quả'
-            },
-            images: ['/products/tomato.jpg'],
-            stock: 100,
-            isActive: true,
-            isFeatured: true,
-            createdAt: '2025-01-01T00:00:00.000Z',
-          },
-          {
-            id: '2',
-            name: 'Bí ngòi',
-            nameEn: 'Zucchini',
-            description: 'Bí ngòi xanh tươi, giàu chất xơ',
-            price: 35000,
-            category: {
-              id: '1',
-              name: 'Rau củ quả'
-            },
-            images: ['/products/zucchini.jpg'],
-            stock: 50,
-            isActive: true,
-            isFeatured: false,
-            createdAt: '2025-01-02T00:00:00.000Z',
-          }
-        ])
-        setTotalPages(1)
       } finally {
         setLoading(false)
       }
@@ -161,12 +123,6 @@
         setCategories(response.data?.map((cat: any) => ({ id: cat.id, name: cat.name })) || [])
       } catch (error) {
         console.error('Failed to fetch categories:', error)
-        // Mock categories for demo
-        setCategories([
-          { id: '1', name: 'Rau củ quả' },
-          { id: '2', name: 'Trái cây' },
-          { id: '3', name: 'Thịt cá' }
-        ])
       }
     }
 
@@ -371,7 +327,11 @@
                           {product.stock}
                         </TableCell>
                         <TableCell>
-                          <Badge variant={product.isActive ? 'default' : 'secondary'}>
+                          <Badge
+                            className={product.isActive
+                              ? 'bg-green-500 text-white border-transparent'
+                              : 'bg-red-500 text-white border-transparent'}
+                          >
                             {product.isActive ? 'Active' : 'Inactive'}
                           </Badge>
                         </TableCell>

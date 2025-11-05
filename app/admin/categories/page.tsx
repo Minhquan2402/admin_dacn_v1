@@ -1,4 +1,6 @@
 "use client"
+import React from "react";
+
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -64,7 +66,10 @@ export default function CategoriesPage() {
   const [formData, setFormData] = useState({
     name: "",
     nameEn: "",
+    slug: "",
     description: "",
+    icon: "",
+    order: 0,
     parentId: "",
     isActive: true,
   })
@@ -80,49 +85,7 @@ export default function CategoriesPage() {
       setCategories(response.data || [])
     } catch (error) {
       console.error('Failed to fetch categories:', error)
-      // Mock data for demo
-      setCategories([
-        {
-          id: '1',
-          name: 'Rau củ quả',
-          nameEn: 'Vegetables',
-          slug: 'rau-cu-qua',
-          description: 'Các loại rau củ quả tươi sạch',
-          icon: '🥬',
-          level: 0,
-          order: 1,
-          isActive: true,
-          productCount: 25,
-          children: [
-            {
-              id: '2',
-              name: 'Rau ăn lá',
-              nameEn: 'Leafy Vegetables',
-              slug: 'rau-an-la',
-              description: 'Rau cải, xà lách...',
-              level: 1,
-              order: 1,
-              isActive: true,
-              productCount: 15,
-              createdAt: '2025-01-01T00:00:00.000Z',
-            }
-          ],
-          createdAt: '2025-01-01T00:00:00.000Z',
-        },
-        {
-          id: '3',
-          name: 'Trái cây',
-          nameEn: 'Fruits',
-          slug: 'trai-cay',
-          description: 'Các loại trái cây tươi',
-          icon: '🍎',
-          level: 0,
-          order: 2,
-          isActive: true,
-          productCount: 30,
-          createdAt: '2025-01-01T00:00:00.000Z',
-        }
-      ])
+      setCategories([])
     } finally {
       setLoading(false)
     }
@@ -138,64 +101,75 @@ export default function CategoriesPage() {
     setExpandedRows(newExpanded)
   }
 
-  const renderCategoryRow = (category: Category, level = 0): React.JSX.Element => {
-    const isExpanded = expandedRows.has(category.id)
-    const hasChildren = category.children && category.children.length > 0
+  // Flatten category tree to a list with level info
+  const flattenCategories = (categories: Category[], expandedRows: Set<string>, level = 0): Array<{category: Category, level: number}> => {
+    let result: Array<{category: Category, level: number}> = [];
+    for (const category of categories) {
+      result.push({ category, level });
+      if (expandedRows.has(category.id) && category.children && category.children.length > 0) {
+        result = result.concat(flattenCategories(category.children, expandedRows, level + 1));
+      }
+    }
+    return result;
+  };
 
+  const renderCategoryRow = (category: Category, level = 0): React.JSX.Element => {
+    const isExpanded = expandedRows.has(category.id);
+    const hasChildren = category.children && category.children.length > 0;
     return (
-      <>
-        <TableRow key={category.id}>
-          <TableCell>
-            <div
-              className="flex items-center"
-              style={{ paddingLeft: `${level * 20}px` }}
-            >
-              {hasChildren && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-4 w-4 p-0 mr-2"
-                  onClick={() => toggleRowExpansion(category.id)}
-                >
-                  <ChevronRight
-                    className={`h-3 w-3 transition-transform ${
-                      isExpanded ? 'rotate-90' : ''
-                    }`}
-                  />
-                </Button>
-              )}
-              <span className="font-medium">{category.name}</span>
-              {category.icon && <span className="ml-2">{category.icon}</span>}
-            </div>
-          </TableCell>
-          <TableCell>{category.nameEn}</TableCell>
-          <TableCell>{category.description}</TableCell>
-          <TableCell>
-            <Badge variant={category.isActive ? 'default' : 'secondary'}>
-              {category.isActive ? 'Active' : 'Inactive'}
-            </Badge>
-          </TableCell>
-          <TableCell>{category.productCount}</TableCell>
-          <TableCell>
-            {new Date(category.createdAt).toLocaleDateString()}
-          </TableCell>
-          <TableCell className="text-right">
-            <div className="flex justify-end space-x-2">
-              <Button variant="outline" size="sm" onClick={() => handleEditCategory(category)}>
-                <Edit className="h-4 w-4" />
+      <TableRow key={category.id}>
+        <TableCell>
+          <div
+            className="flex items-center"
+            style={{ paddingLeft: `${level * 20}px` }}
+          >
+            {hasChildren && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-4 w-4 p-0 mr-2"
+                onClick={() => toggleRowExpansion(category.id)}
+              >
+                <ChevronRight
+                  className={`h-3 w-3 transition-transform ${
+                    isExpanded ? 'rotate-90' : ''
+                  }`}
+                />
               </Button>
-              <Button variant="outline" size="sm" onClick={() => handleDeleteCategory(category.id)}>
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          </TableCell>
-        </TableRow>
-        {isExpanded && category.children?.map(child =>
-          renderCategoryRow(child, level + 1)
-        )}
-      </>
-    )
-  }
+            )}
+            <span className="font-medium">{category.name}</span>
+            {category.icon && <span className="ml-2">{category.icon}</span>}
+          </div>
+        </TableCell>
+        <TableCell>{category.nameEn}</TableCell>
+        <TableCell>{category.description}</TableCell>
+        <TableCell>
+          <Badge
+            style={{
+              backgroundColor: category.isActive ? '#22c55e' : '#ef4444', // xanh lá và đỏ
+              color: 'white',
+            }}
+          >
+            {category.isActive ? 'Active' : 'Inactive'}
+          </Badge>
+        </TableCell>
+        <TableCell>{category.productCount}</TableCell>
+        <TableCell>
+          {new Date(category.createdAt).toLocaleDateString()}
+        </TableCell>
+        <TableCell className="text-right">
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" size="sm" onClick={() => handleEditCategory(category)}>
+              <Edit className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => handleDeleteCategory(category.id)}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        </TableCell>
+      </TableRow>
+    );
+  };
 
   const filteredCategories = categories.filter(category =>
     category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -206,7 +180,10 @@ export default function CategoriesPage() {
     setFormData({
       name: "",
       nameEn: "",
+      slug: "",
       description: "",
+      icon: "",
+      order: 0,
       parentId: "",
       isActive: true,
     })
@@ -217,7 +194,10 @@ export default function CategoriesPage() {
     setFormData({
       name: category.name,
       nameEn: category.nameEn,
+      slug: category.slug || "",
       description: category.description || "",
+      icon: category.icon || "",
+      order: category.order || 0,
       parentId: category.parentId || "",
       isActive: category.isActive,
     })
@@ -228,54 +208,38 @@ export default function CategoriesPage() {
   const handleDeleteCategory = async (categoryId: string) => {
     if (confirm("Are you sure you want to delete this category?")) {
       try {
-        await apiClient.deleteCategory(categoryId)
-        fetchCategories()
+        await apiClient.deleteCategoryWithForce(categoryId, false);
+        fetchCategories();
       } catch (error) {
-        console.error('Failed to delete category:', error)
-        // For demo, remove from local state
-        setCategories(categories.filter(cat => cat.id !== categoryId))
+        console.error('Failed to delete category:', error);
       }
     }
   }
 
   const handleSubmitCategory = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     try {
+      // Chuẩn hóa dữ liệu gửi lên API
+      const submitData = {
+        name: formData.name,
+        nameEn: formData.nameEn,
+        slug: formData.slug,
+        description: formData.description,
+        icon: formData.icon,
+        order: Number(formData.order) || 0,
+        parentId: formData.parentId === 'root' ? null : formData.parentId,
+        isActive: formData.isActive,
+      };
       if (editingCategory) {
-        // Update category
-        await apiClient.updateCategory(editingCategory.id, formData)
-        setIsEditModalOpen(false)
+        await apiClient.updateCategory(editingCategory.id, submitData);
+        setIsEditModalOpen(false);
       } else {
-        // Add new category
-        await apiClient.createCategory(formData)
-        setIsAddModalOpen(false)
+        await apiClient.createCategory(submitData);
+        setIsAddModalOpen(false);
       }
-      fetchCategories()
+      fetchCategories();
     } catch (error) {
-      console.error('Failed to save category:', error)
-      // For demo, update local state
-      if (editingCategory) {
-        setCategories(categories.map(cat =>
-          cat.id === editingCategory.id
-            ? { ...cat, ...formData }
-            : cat
-        ))
-        setIsEditModalOpen(false)
-      } else {
-        const newCategory: Category = {
-          id: Date.now().toString(),
-          ...formData,
-          slug: formData.name.toLowerCase().replace(/\s+/g, '-'),
-          level: formData.parentId ? 1 : 0,
-          order: categories.length + 1,
-          productCount: 0,
-          icon: "📁",
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        }
-        setCategories([...categories, newCategory])
-        setIsAddModalOpen(false)
-      }
+      console.error('Failed to save category:', error);
     }
   }
 
@@ -341,7 +305,7 @@ export default function CategoriesPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredCategories.map(category => renderCategoryRow(category))
+                  flattenCategories(filteredCategories, expandedRows).map(({category, level}) => renderCategoryRow(category, level))
                 )}
               </TableBody>
             </Table>
@@ -361,67 +325,40 @@ export default function CategoriesPage() {
           <form onSubmit={handleSubmitCategory}>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">
-                  Name
-                </Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="col-span-3"
-                  required
-                />
+                <Label htmlFor="name" className="text-right">Name</Label>
+                <Input id="name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="col-span-3" required />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="nameEn" className="text-right">
-                  English Name
-                </Label>
-                <Input
-                  id="nameEn"
-                  value={formData.nameEn}
-                  onChange={(e) => setFormData({ ...formData, nameEn: e.target.value })}
-                  className="col-span-3"
-                  required
-                />
+                <Label htmlFor="nameEn" className="text-right">English Name</Label>
+                <Input id="nameEn" value={formData.nameEn} onChange={(e) => setFormData({ ...formData, nameEn: e.target.value })} className="col-span-3" required />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="description" className="text-right">
-                  Description
-                </Label>
-                <Input
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="col-span-3"
-                />
+                <Label htmlFor="slug" className="text-right">Slug</Label>
+                <Input id="slug" value={formData.slug} onChange={(e) => setFormData({ ...formData, slug: e.target.value })} className="col-span-3" required />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="parentId" className="text-right">
-                  Parent Category
-                </Label>
+                <Label htmlFor="description" className="text-right">Description</Label>
+                <Input id="description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="icon" className="text-right">Icon</Label>
+                <Input id="icon" value={formData.icon} onChange={(e) => setFormData({ ...formData, icon: e.target.value })} className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="order" className="text-right">Order</Label>
+                <Input id="order" type="number" value={formData.order} onChange={(e) => setFormData({ ...formData, order: Number(e.target.value) })} className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="parentId" className="text-right">Parent Category</Label>
                 <Select value={formData.parentId} onValueChange={(value) => setFormData({ ...formData, parentId: value })}>
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="Select parent category (optional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None (Root Category)</SelectItem>
+                    <SelectItem value="root">None (Root Category)</SelectItem>
                     {categories.filter(cat => !cat.parentId).map(cat => (
                       <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="isActive" className="text-right">
-                  Active
-                </Label>
-                <Select value={formData.isActive.toString()} onValueChange={(value) => setFormData({ ...formData, isActive: value === 'true' })}>
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="true">Active</SelectItem>
-                    <SelectItem value="false">Inactive</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -488,7 +425,7 @@ export default function CategoriesPage() {
                     <SelectValue placeholder="Select parent category (optional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None (Root Category)</SelectItem>
+                    <SelectItem value="root">None (Root Category)</SelectItem>
                     {categories.filter(cat => !cat.parentId && cat.id !== editingCategory?.id).map(cat => (
                       <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                     ))}

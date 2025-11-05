@@ -100,9 +100,8 @@ class ApiClient {
       body: JSON.stringify(data),
     })
   }
-
-  async deleteCategory(id: string) {
-    return this.request(`/categories/${id}`, {
+  async deleteCategoryWithForce(id: string, force: boolean = false) {
+    return this.request(`/categories/${id}?force=${force}`, {
       method: 'DELETE',
     })
   }

@@ -111,8 +111,12 @@ import { Button } from "@/components/ui/button"
             const parentCat = categories.find(c => c.id === item.category.parentId);
             if (parentCat) parentName = parentCat.name;
           }
+          // Đảm bảo id là string, không undefined/null
+          let id = "";
+          if (typeof item.id === "string" && item.id) id = item.id;
+          else if (typeof item._id === "string" && item._id) id = item._id;
           return {
-            id: item.id || item._id,
+            id,
             name: item.name,
             nameEn: item.nameEn,
             description: item.description,
@@ -188,13 +192,17 @@ import { Button } from "@/components/ui/button"
     }
 
     const handleDeleteProduct = async (productId: string) => {
+      console.log('Delete productId:', productId)
       if (confirm("Bạn có chắc chắn muốn xóa vĩnh viễn sản phẩm này? Hành động này không thể hoàn tác.")) {
         try {
+          // Xoá mềm trước
+          await apiClient.deleteProduct(productId)
+          // Sau đó xoá vĩnh viễn
           await apiClient.deleteProductPermanent(productId)
-          fetchProducts()
+          setProducts(prev => prev.filter(p => p.id !== productId))
         } catch (error) {
           console.error('Failed to permanently delete product:', error)
-          setProducts(products.filter(p => p.id !== productId))
+          setProducts(prev => prev.filter(p => p.id !== productId))
         }
       }
     }

@@ -1,6 +1,25 @@
 // API client for BE_DACN_v1 backend
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
 class ApiClient {
+  // Upload product images (multipart/form-data)
+  async uploadProductImages(productId: string, formDataImg: FormData) {
+    const url = `${this.baseURL}/products/${productId}/images`
+    const token = localStorage.getItem('admin_token')
+    const headers: Record<string, string> = {}
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
+    }
+    // Không đặt Content-Type, để browser tự set boundary
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: formDataImg,
+    })
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status} ${response.statusText}`)
+    }
+    return response.json()
+  }
   private baseURL: string
 
   constructor(baseURL: string) {
@@ -137,6 +156,13 @@ class ApiClient {
 
   async deleteProduct(id: string) {
     return this.request(`/products/${id}`, {
+      method: 'DELETE',
+    })
+  }
+
+  // Xóa vĩnh viễn sản phẩm (Admin only)
+  async deleteProductPermanent(id: string) {
+    return this.request(`/products/${id}/permanent`, {
       method: 'DELETE',
     })
   }

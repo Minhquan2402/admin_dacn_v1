@@ -1,7 +1,16 @@
-  "use client"
-
-  import { useState, useEffect } from "react"
-  import { Button } from "@/components/ui/button"
+"use client"
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent
+} from "@/components/ui/dropdown-menu"
+import React from "react"
+import { useState, useEffect } from "react"
+import { Button } from "@/components/ui/button"
   import { Input } from "@/components/ui/input"
   import {
     Table,
@@ -33,25 +42,28 @@
   import { Search, Plus, Edit, Trash2, Eye } from "lucide-react"
   import { apiClient } from "@/lib/api"
 
-  interface Product {
-    id: string
-    name: string
-    description: string
-    price: number
-    originalPrice?: number
-    category: {
+    interface Product {
       id: string
       name: string
+      description: string
+      price: number
+      originalPrice?: number
+      category: {
+        id: string
+        name: string
+        parentName?: string
+      }
+      unit?: string
+      images: string[]
+      stock: number
+      isActive: boolean
+      isFeatured: boolean
+      createdAt: string
     }
-    images: string[]
-    stock: number
-    isActive: boolean
-    isFeatured: boolean
-    createdAt: string
-  }
 
   export default function ProductsPage() {
-    // Đã xóa state và effect liên quan đến hình ảnh
+  // State lưu file ảnh khi thêm/sửa sản phẩm
+  const [imageFiles, setImageFiles] = useState<File[]>([])
     const [products, setProducts] = useState<Product[]>([])
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState("")
@@ -70,14 +82,15 @@
       price: 0,
       originalPrice: 0,
       categoryId: "",
+      unit: "",
       stock: 0,
       isActive: true,
       isFeatured: false,
     })
   // ...existing code...
 
-    // Categories for dropdown
-    const [categories, setCategories] = useState<Array<{id: string, name: string}>>([])
+  // Categories dạng cây (có children)
+  const [categories, setCategories] = useState<Array<any>>([])
 
     useEffect(() => {
       fetchProducts()
@@ -92,22 +105,29 @@
           limit: 10,
           search: searchTerm,
         })
-        const mappedProducts = (response.data || []).map((item: any) => ({
-          id: item.id || item._id,
-          name: item.name,
-          nameEn: item.nameEn,
-          description: item.description,
-          price: item.price,
-          originalPrice: item.originalPrice,
-          category: typeof item.category === 'object' && item.category !== null
-            ? { id: item.category.id || item.category._id || '', name: item.category.name || item.category }
-            : { id: '', name: item.category || '' },
-          images: item.images || [],
-          stock: typeof item.stock === 'number' ? item.stock : (item.stockQuantity ?? 0),
-          isActive: typeof item.isActive === 'boolean' ? item.isActive : (item.inStock ?? false),
-          isFeatured: item.isFeatured ?? false,
-          createdAt: item.createdAt,
-        }))
+        const mappedProducts = (response.data || []).map((item: any) => {
+          let parentName = '';
+          if (item.category && item.category.parentId && categories.length > 0) {
+            const parentCat = categories.find(c => c.id === item.category.parentId);
+            if (parentCat) parentName = parentCat.name;
+          }
+          return {
+            id: item.id || item._id,
+            name: item.name,
+            nameEn: item.nameEn,
+            description: item.description,
+            price: item.price,
+            originalPrice: item.originalPrice,
+            category: typeof item.category === 'object' && item.category !== null
+              ? { id: item.category.id || item.category._id || '', name: item.category.name || item.category, parentName }
+              : { id: '', name: item.category || '', parentName },
+            images: item.images || [],
+            stock: typeof item.stock === 'number' ? item.stock : (item.stockQuantity ?? 0),
+            isActive: typeof item.isActive === 'boolean' ? item.isActive : (item.inStock ?? false),
+            isFeatured: item.isFeatured ?? false,
+            createdAt: item.createdAt,
+          }
+        })
         setProducts(mappedProducts)
         setTotalPages(response.pagination?.totalPages || 1)
       } catch (error) {
@@ -117,10 +137,11 @@
       }
     }
 
+    // Lấy category dạng cây (có children)
     const fetchCategories = async () => {
       try {
         const response = await apiClient.getCategories()
-        setCategories(response.data?.map((cat: any) => ({ id: cat.id, name: cat.name })) || [])
+        setCategories(response.data || [])
       } catch (error) {
         console.error('Failed to fetch categories:', error)
       }
@@ -140,12 +161,12 @@
         price: 0,
         originalPrice: 0,
         categoryId: "",
+        unit: "",
         stock: 0,
         isActive: true,
         isFeatured: false,
       })
-  // Đã xóa logic reset hình ảnh
-  // ...existing code...
+      setImageFiles([])
       setIsAddModalOpen(true)
     }
 
@@ -156,24 +177,23 @@
         price: product.price,
         originalPrice: product.originalPrice || 0,
         categoryId: product.category.id,
+        unit: product.unit ?? "",
         stock: product.stock,
         isActive: product.isActive,
         isFeatured: product.isFeatured,
       })
-  // Đã xóa logic reset hình ảnh
-  // ...existing code...
+      setImageFiles([])
       setEditingProduct(product)
       setIsEditModalOpen(true)
     }
 
     const handleDeleteProduct = async (productId: string) => {
-      if (confirm("Are you sure you want to delete this product?")) {
+      if (confirm("Bạn có chắc chắn muốn xóa vĩnh viễn sản phẩm này? Hành động này không thể hoàn tác.")) {
         try {
-          await apiClient.deleteProduct(productId)
+          await apiClient.deleteProductPermanent(productId)
           fetchProducts()
         } catch (error) {
-          console.error('Failed to delete product:', error)
-          // For demo, remove from local state
+          console.error('Failed to permanently delete product:', error)
           setProducts(products.filter(p => p.id !== productId))
         }
       }
@@ -188,24 +208,54 @@
           description: formData.description,
           price: formData.price,
           originalPrice: formData.originalPrice,
-          categoryId: formData.categoryId,
+          category: formData.categoryId, // truyền id cho backend
+          unit: formData.unit,
           stockQuantity: formData.stock,
           isActive: formData.isActive,
           isFeatured: formData.isFeatured,
         }
         let productId = null
-        if (editingProduct) {
-          // Sửa sản phẩm
-          await apiClient.updateProduct(editingProduct.id, payload)
-          productId = editingProduct.id
-          setIsEditModalOpen(false)
+        let imageUrls: string[] = []
+        // Nếu có file ảnh, upload lên Cloudinary qua API backend
+        if (imageFiles.length > 0) {
+          const formDataImg = new FormData()
+          imageFiles.forEach(file => formDataImg.append('images', file))
+          // Gọi API backend để upload ảnh, trả về mảng URL
+          // Giả sử apiClient.uploadProductImages(productId, formDataImg) trả về { urls: [...] }
+          // Nếu là thêm mới, cần tạo product trước để lấy id
+          if (!editingProduct) {
+            const res = await apiClient.createProduct(payload)
+            productId = res.data?.id || res.data?._id
+            // Upload ảnh
+            const imgRes = await apiClient.uploadProductImages(productId, formDataImg)
+            imageUrls = imgRes.data?.images || []
+            // Cập nhật lại product với images
+            await apiClient.updateProduct(productId, { images: imageUrls })
+            setIsAddModalOpen(false)
+          } else {
+            // Sửa sản phẩm
+            await apiClient.updateProduct(editingProduct.id, payload)
+            productId = editingProduct.id
+            // Upload ảnh
+            const imgRes = await apiClient.uploadProductImages(productId, formDataImg)
+            imageUrls = imgRes.data?.images || []
+            // Nếu có ảnh mới thì thêm vào mảng ảnh cũ, nếu không thì giữ nguyên
+            const newImages = imageUrls.length > 0 ? [...editingProduct.images, ...imageUrls] : editingProduct.images
+            await apiClient.updateProduct(productId, { images: newImages })
+            setIsEditModalOpen(false)
+          }
         } else {
-          // Thêm sản phẩm mới
-          const res = await apiClient.createProduct(payload)
-          productId = res.data?.id || res.data?._id
-          setIsAddModalOpen(false)
+          // Không có ảnh, chỉ tạo/sửa sản phẩm
+          if (editingProduct) {
+            await apiClient.updateProduct(editingProduct.id, payload)
+            productId = editingProduct.id
+            setIsEditModalOpen(false)
+          } else {
+            const res = await apiClient.createProduct(payload)
+            productId = res.data?.id || res.data?._id
+            setIsAddModalOpen(false)
+          }
         }
-        // Đã xóa bước upload hình ảnh
         // Sau khi upload, cập nhật lại danh sách sản phẩm
         fetchProducts()
       } catch (error) {
@@ -275,6 +325,7 @@
                     <TableHead>Category</TableHead>
                     <TableHead>Price</TableHead>
                     <TableHead>Stock</TableHead>
+                    {/* Bỏ cột Unit */}
                     <TableHead>Status</TableHead>
                     <TableHead>Featured</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -314,7 +365,12 @@
                             <div className="font-medium">{product.name}</div>
                           </div>
                         </TableCell>
-                        <TableCell>{product.category.name}</TableCell>
+                        <TableCell>
+                          {product.category.name}
+                          {product.category.parentName && (
+                            <span className="text-xs text-muted-foreground"> <br/>({product.category.parentName})</span>
+                          )}
+                        </TableCell>
                         <TableCell>
                           <div>
                             <div className="font-medium">{formatPrice(product.price)}</div>
@@ -328,6 +384,7 @@
                         <TableCell>
                           {product.stock}
                         </TableCell>
+                        {/* Bỏ hiển thị đơn vị tính ở bảng */}
                         <TableCell>
                           <Badge
                             className={product.isActive
@@ -384,8 +441,6 @@
             </div>
           </CardContent>
         </Card>
-
-        {/* Add Product Modal */}
         <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
           <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
             <DialogHeader>
@@ -402,7 +457,7 @@
                   </Label>
                   <Input
                     id="name"
-                    value={formData.name}
+                    value={formData.name ?? ""}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="col-span-3"
                     required
@@ -414,7 +469,7 @@
                   </Label>
                   <Textarea
                     id="description"
-                    value={formData.description}
+                    value={formData.description ?? ""}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     className="col-span-3"
                     rows={3}
@@ -427,7 +482,7 @@
                   <Input
                     id="price"
                     type="number"
-                    value={formData.price}
+                    value={formData.price ?? 0}
                     onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
                     className="col-span-3"
                     required
@@ -440,7 +495,7 @@
                   <Input
                     id="originalPrice"
                     type="number"
-                    value={formData.originalPrice}
+                    value={formData.originalPrice ?? 0}
                     onChange={(e) => setFormData({ ...formData, originalPrice: Number(e.target.value) })}
                     className="col-span-3"
                   />
@@ -449,16 +504,44 @@
                   <Label htmlFor="categoryId" className="text-right">
                     Category
                   </Label>
-                  <Select value={formData.categoryId} onValueChange={(value) => setFormData({ ...formData, categoryId: value })}>
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map(cat => (
-                        <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="col-span-3">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" className="w-full text-left">
+                          {(() => {
+                            const parent = categories.find(c => c.id === formData.categoryId);
+                            if (parent) return parent.name;
+                            for (const cat of categories) {
+                              if (cat.children && cat.children.length > 0) {
+                                const child = cat.children.find((child: any) => child.id === formData.categoryId);
+                                if (child) return child.name;
+                              }
+                            }
+                            return "Select category";
+                          })()}
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-full">
+                        {categories.map(cat => (
+                          cat.children && cat.children.length > 0 ? (
+                            <DropdownMenuSub key={cat.id}>
+                              <DropdownMenuSubTrigger>{cat.name}</DropdownMenuSubTrigger>
+                              <DropdownMenuSubContent>
+                                {/* Only show parent if not 'Hải sản' under 'Cá biển' */}
+                                {cat.children.map((child: any) => (
+                                  <DropdownMenuItem key={child.id} onClick={() => setFormData({ ...formData, categoryId: child.id })}>
+                                    {child.name}
+                                  </DropdownMenuItem>
+                                ))}
+                              </DropdownMenuSubContent>
+                            </DropdownMenuSub>
+                          ) : (
+                            <DropdownMenuItem key={cat.id} onClick={() => setFormData({ ...formData, categoryId: cat.id })}>{cat.name}</DropdownMenuItem>
+                          )
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="stock" className="text-right">
@@ -467,14 +550,42 @@
                   <Input
                     id="stock"
                     type="number"
-                    value={formData.stock}
+                    value={formData.stock ?? 0}
                     onChange={(e) => setFormData({ ...formData, stock: Number(e.target.value) })}
                     className="col-span-3"
                     required
                   />
                 </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="unit" className="text-right">
+                    Đơn vị tính
+                  </Label>
+                  <Input
+                    id="unit"
+                    value={formData.unit ?? ""}
+                    onChange={e => setFormData({ ...formData, unit: e.target.value })}
+                    className="col-span-3"
+                    required
+                  />
+                </div>
                 {/* Trường upload hình ảnh */}
-                {/* Đã xóa trường upload hình ảnh */}
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="images" className="text-right">
+                    Images
+                  </Label>
+                  <Input
+                    id="images"
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    className="col-span-3"
+                    onChange={e => {
+                      if (e.target.files) {
+                        setImageFiles(Array.from(e.target.files))
+                      }
+                    }}
+                  />
+                </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="isActive" className="text-right">
                     Active
@@ -528,7 +639,7 @@
                   </Label>
                   <Input
                     id="edit-name"
-                    value={formData.name}
+                    value={formData.name ?? ""}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="col-span-3"
                     required
@@ -540,7 +651,7 @@
                   </Label>
                   <Textarea
                     id="edit-description"
-                    value={formData.description}
+                    value={formData.description ?? ""}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     className="col-span-3"
                     rows={3}
@@ -553,7 +664,7 @@
                   <Input
                     id="edit-price"
                     type="number"
-                    value={formData.price}
+                    value={formData.price ?? 0}
                     onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
                     className="col-span-3"
                     required
@@ -566,7 +677,7 @@
                   <Input
                     id="edit-originalPrice"
                     type="number"
-                    value={formData.originalPrice}
+                    value={formData.originalPrice ?? 0}
                     onChange={(e) => setFormData({ ...formData, originalPrice: Number(e.target.value) })}
                     className="col-span-3"
                   />
@@ -581,7 +692,14 @@
                     </SelectTrigger>
                     <SelectContent>
                       {categories.map(cat => (
-                        <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                        <React.Fragment key={cat.id}>
+                          <SelectItem value={cat.id}>{cat.name}</SelectItem>
+                          {cat.children && cat.children.length > 0 && cat.children.map((child: any) => (
+                            <SelectItem key={child.id} value={child.id}>
+                              <span style={{ paddingLeft: 20 }}>&#x21B3; {(child as any).name}</span>
+                            </SelectItem>
+                          ))}
+                        </React.Fragment>
                       ))}
                     </SelectContent>
                   </Select>
@@ -593,27 +711,57 @@
                   <Input
                     id="edit-stock"
                     type="number"
-                    value={formData.stock}
+                    value={formData.stock ?? 0}
                     onChange={(e) => setFormData({ ...formData, stock: Number(e.target.value) })}
                     className="col-span-3"
                     required
                   />
                 </div>
-                {/* Trường upload hình ảnh */}
-                {/* Đã xóa trường upload hình ảnh */}
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="edit-isActive" className="text-right">
-                    Active
+                  <Label htmlFor="edit-unit" className="text-right">
+                    Đơn vị tính
                   </Label>
-                  <Select value={formData.isActive.toString()} onValueChange={(value) => setFormData({ ...formData, isActive: value === 'true' })}>
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="true">Active</SelectItem>
-                      <SelectItem value="false">Inactive</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Input
+                    id="edit-unit"
+                    value={formData.unit ?? ""}
+                    onChange={e => setFormData({ ...formData, unit: e.target.value })}
+                    className="col-span-3"
+                    required
+                  />
+                </div>
+                {/* Trường upload hình ảnh */}
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="edit-images" className="text-right">
+                    Category
+                  </Label>
+                  <div className="col-span-3">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" className="w-full text-left">
+                          {categories.find(c => c.id === formData.categoryId)?.name || "Select category"}
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-full">
+                        {categories.map(cat => (
+                          cat.children && cat.children.length > 0 ? (
+                            <DropdownMenuSub key={cat.id}>
+                              <DropdownMenuSubTrigger>{cat.name}</DropdownMenuSubTrigger>
+                              <DropdownMenuSubContent>
+                                <DropdownMenuItem onClick={() => setFormData({ ...formData, categoryId: cat.id })}>{cat.name}</DropdownMenuItem>
+                                {cat.children.map((child: any) => (
+                                  <DropdownMenuItem key={child.id} onClick={() => setFormData({ ...formData, categoryId: child.id })}>
+                                    {child.name}
+                                  </DropdownMenuItem>
+                                ))}
+                              </DropdownMenuSubContent>
+                            </DropdownMenuSub>
+                          ) : (
+                            <DropdownMenuItem key={cat.id} onClick={() => setFormData({ ...formData, categoryId: cat.id })}>{cat.name}</DropdownMenuItem>
+                          )
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="edit-isFeatured" className="text-right">

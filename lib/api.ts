@@ -2,12 +2,31 @@
 // API client for BE_DACN_v1 backend
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
 class ApiClient {
+    // Assign ticket to agent (admin only)
+    async assignTicket(id: string, agentId: string) {
+      return this.request(`/tickets/${id}/assign`, {
+        method: 'PATCH',
+        body: JSON.stringify({ agentId }),
+      });
+    }
+
+    // Update ticket status (admin or assigned agent)
+    async updateTicketStatus(id: string, status: string) {
+      return this.request(`/tickets/${id}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      });
+    }
   // Livestreams API
   async getLivestreams(params?: { status?: string }) {
     const query = new URLSearchParams();
     if (params?.status) query.append('status', params.status);
     return this.request(`/livestreams?${query}`);
   }
+    // Tickets API
+    async getTickets() {
+      return this.request('/tickets');
+    }
   // Upload product images (multipart/form-data)
   async uploadProductImages(productId: string, formDataImg: FormData) {
     const url = `${this.baseURL}/products/${productId}/images`

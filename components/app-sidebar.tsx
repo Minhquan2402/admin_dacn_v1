@@ -94,6 +94,11 @@ const data = {
       url: "/admin/livestreams",
       icon: AudioWaveform,
     },
+    {
+      title: "Tickets",
+      url: "/admin/tickets",
+      icon: Command,
+    },
   ],
   projects: [
     {

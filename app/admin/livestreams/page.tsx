@@ -2,6 +2,7 @@
 import React from "react";
 
 import { apiClient } from "@/lib/api";
+import { Button } from "@/components/ui/button";
 
 type Livestream = {
   id: number;
@@ -79,8 +80,14 @@ export default function LivestreamsPage() {
                 </td>
                 <td className="border px-4 py-2">{ls.startTime}</td>
                 <td className="border px-4 py-2">
-                  <button className="bg-blue-500 text-white px-2 py-1 rounded mr-2">Xem</button>
-                  <button className="bg-red-500 text-white px-2 py-1 rounded">Xóa</button>
+                  <div className="flex gap-2 justify-center">
+                    <Button variant="outline" size="sm">
+                      Xem
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      Xóa
+                    </Button>
+                  </div>
                 </td>
               </tr>
             ))}

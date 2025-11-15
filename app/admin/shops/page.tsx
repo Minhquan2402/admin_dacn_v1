@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from 'react';
+import { Button } from "@/components/ui/button"
 
 interface Shop {
   id: string;
@@ -78,17 +79,15 @@ const PendingShopsPage: React.FC = () => {
                         {shop.status}
                       </span>
                     </td>
-                    <td className="px-4 py-2 flex gap-2">
-                      <button
-                        className="p-2 rounded hover:bg-gray-100 text-gray-500"
-                        title="View details"
-                        onClick={() => setSelectedShop(shop)}
-                      >
-                        <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
-                      </button>
-                      <button className="p-2 rounded hover:bg-gray-100 text-gray-500" title="Delete" disabled>
-                        <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m5 10v-6"/></svg>
-                      </button>
+                    <td className="px-4 py-2">
+                      <div className="flex gap-2 justify-center">
+                        <Button variant="outline" size="sm" onClick={() => setSelectedShop(shop)} title="View details">
+                          <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+                        </Button>
+                        <Button variant="outline" size="sm" title="Delete" disabled>
+                          <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m5 10v-6"/></svg>
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -108,7 +107,7 @@ const PendingShopsPage: React.FC = () => {
             <div className="mb-2"><span className="font-semibold">Status:</span> {selectedShop ? (<span className={`inline-block px-2 py-1 rounded text-xs font-medium ${selectedShop.status === 'approved' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{selectedShop.status}</span>) : ''}</div>
             {/* Thêm các trường khác nếu cần */}
             <div className="mt-4 text-right">
-              <button className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300" onClick={() => setSelectedShop(null)}>Close</button>
+              <Button variant="outline" size="sm" onClick={() => setSelectedShop(null)}>Close</Button>
             </div>
           </div>
         </div>

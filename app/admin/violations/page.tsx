@@ -1,7 +1,7 @@
-
 "use client";
 import React, { useState } from "react";
 import { apiClient } from "@/lib/api";
+import { Button } from "@/components/ui/button";
 
 export default function NotificationPage() {
   const [title, setTitle] = useState("");
@@ -72,13 +72,9 @@ export default function NotificationPage() {
           onChange={e => setTargetId(e.target.value)}
         />
         <div className="flex items-center gap-4">
-          <button
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-            onClick={handleSend}
-            disabled={loading || !targetId}
-          >
+          <Button variant="outline" size="sm" onClick={handleSend} disabled={loading || !targetId}>
             Gửi cho 1 người dùng
-          </button>
+          </Button>
           <select
             className="border px-2 py-1 rounded"
             value={target}
@@ -87,13 +83,9 @@ export default function NotificationPage() {
             <option value="user">Tất cả người dùng</option>
             <option value="shop">Tất cả shop</option>
           </select>
-          <button
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50"
-            onClick={handleBroadcast}
-            disabled={loading}
-          >
+          <Button variant="outline" size="sm" onClick={handleBroadcast} disabled={loading}>
             Broadcast thông báo
-          </button>
+          </Button>
         </div>
         {result && (
           <div className="mt-2 text-sm text-green-700">{result}</div>

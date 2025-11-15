@@ -18,6 +18,7 @@ import {
   BarChart3,
   Home,
   Bell,
+  Store,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -62,6 +63,11 @@ const data = {
       title: "Categories",
       url: "/admin/categories",
       icon: BookOpen,
+    },
+    {
+      title: "Shops",
+      url: "/admin/shops",
+      icon: Store,
     },
     {
       title: "Products",

@@ -116,13 +116,19 @@ import { Button } from "@/components/ui/button"
           limit: 10,
           search: searchTerm,
         })
+        const safeName = (name: any) => {
+          if (typeof name === "string") return name;
+          if (typeof name === "number") return name.toString();
+          if (name?.vi) return name.vi;
+          if (name?.en) return name.en;
+          return JSON.stringify(name);
+        };
         const mappedProducts = (response.data || []).map((item: any) => {
           let parentName = '';
           if (item.category && item.category.parentId && categories.length > 0) {
             const parentCat = categories.find(c => c.id === item.category.parentId);
             if (parentCat) parentName = parentCat.name;
           }
-          // Đảm bảo id là string, không undefined/null
           let id = "";
           if (typeof item.id === "string" && item.id) id = item.id;
           else if (typeof item._id === "string" && item._id) id = item._id;
@@ -133,9 +139,17 @@ import { Button } from "@/components/ui/button"
             description: item.description,
             price: item.price,
             originalPrice: item.originalPrice,
-            category: typeof item.category === 'object' && item.category !== null
-              ? { id: item.category.id || item.category._id || '', name: item.category.name || item.category, parentName }
-              : { id: '', name: item.category || '', parentName },
+            category: item.category
+              ? {
+                  id: item.category.id || item.category._id || "",
+                  name: safeName(item.category.name),
+                  parentName,
+                }
+              : {
+                  id: "",
+                  name: "",
+                  parentName,
+                },
             images: item.images || [],
             stock: typeof item.stock === 'number' ? item.stock : (item.stockQuantity ?? 0),
             isActive: typeof item.isActive === 'boolean' ? item.isActive : (item.inStock ?? false),

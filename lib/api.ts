@@ -1,5 +1,23 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
 class ApiClient {
+        // Issue voucher to a specific user (admin only)
+        async issueVoucherToUser(voucherId: string, userId: string) {
+          return this.request(`/vouchers/${voucherId}/issue`, {
+            method: 'POST',
+            body: JSON.stringify({ userId }),
+          });
+        }
+      // Vouchers API
+      async getVouchers() {
+        return this.request('/vouchers');
+      }
+
+      async createVoucher(data: any) {
+        return this.request('/vouchers', {
+          method: 'POST',
+          body: JSON.stringify(data),
+        });
+      }
     // Cập nhật hồ sơ người dùng hiện tại
     async updateCurrentUserProfile(data: any) {
       return this.request('/users/me/profile', {

@@ -85,6 +85,11 @@ const data = {
       icon: BarChart3,
     },
     {
+      title: "Vouchers",
+      url: "/admin/vouchers",
+      icon: Bot,
+    },
+    {
       title: "Thông báo",
       url: "/admin/violations",
       icon: Bell,

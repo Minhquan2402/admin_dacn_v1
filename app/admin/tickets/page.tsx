@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Pencil, Trash } from "lucide-react";
+import { Pencil, Book } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/api";
 
@@ -53,45 +53,59 @@ const TicketsPage = () => {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Ticket List</h1>
-      {loading ? (
-        <div>Đang tải...</div>
-      ) : error ? (
-        <div className="text-red-500">{error}</div>
-      ) : (
-        <table className="min-w-full border">
-          <thead>
-            <tr>
-              <th className="border px-2 py-1">ID</th>
-              <th className="border px-2 py-1">Tiêu đề</th>
-              <th className="border px-2 py-1">Trạng thái</th>
-              <th className="border px-2 py-1">Người tạo</th>
-              <th className="border px-2 py-1">Ngày tạo</th>
-              <th className="border px-2 py-1">Chức năng</th>
-            </tr>
-          </thead>
-          <tbody>
-            {tickets.map((ticket: any) => (
-              <tr key={ticket._id || ticket.id}>
-                <td className="border px-2 py-1">{ticket._id || ticket.id}</td>
-                <td className="border px-2 py-1">{ticket.title || ticket.subject}</td>
-                <td className="border px-2 py-1">{ticket.status}</td>
-                <td className="border px-2 py-1">{ticket.createdBy?.name || ticket.createdBy || ""}</td>
-                <td className="border px-2 py-1">{ticket.createdAt ? new Date(ticket.createdAt).toLocaleString() : ""}</td>
-                <td className="border px-2 py-1">
-                  <div className="flex justify-center space-x-2">
-                    <Button variant="outline" size="sm" onClick={() => handleAssign(ticket._id || ticket.id)}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => handleUpdateStatus(ticket._id || ticket.id)}>
-                      <Trash className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </td>
+      <h1 className="text-2xl font-bold mb-2">Ticket Management</h1>
+      <p className="text-gray-500 mb-4">Organize and review all tickets on the platform</p>
+      {loading && <p>Đang tải...</p>}
+      {error && <p className="text-red-500">{error}</p>}
+      {!loading && !error && (
+        <div className="bg-white rounded-xl shadow border p-4">
+          <table className="min-w-full">
+            <thead>
+              <tr className="bg-gray-50">
+                <th className="px-4 py-2 text-left">ID</th>
+                <th className="px-4 py-2 text-left">Tiêu đề</th>
+                <th className="px-4 py-2 text-left">Trạng thái</th>
+                <th className="px-4 py-2 text-left">Người tạo</th>
+                <th className="px-4 py-2 text-left">Ngày tạo</th>
+                <th className="px-4 py-2 text-left">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {tickets.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="text-center py-4">No tickets found.</td>
+                </tr>
+              ) : (
+                tickets.map((ticket: any) => (
+                  <tr key={ticket._id || ticket.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-2 font-semibold">{ticket._id || ticket.id}</td>
+                    <td className="px-4 py-2">{ticket.title || ticket.subject}</td>
+                    <td className="px-4 py-2">
+                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${ticket.status === 'open' ? 'bg-green-100 text-green-700' : ticket.status === 'resolved' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                        {ticket.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2">{ticket.createdBy?.name || ticket.createdBy || ""}</td>
+                    <td className="px-4 py-2">
+                      {ticket.createdAt ? new Date(ticket.createdAt).toLocaleDateString() : ""}<br />
+                      <span className="text-xs text-gray-400">{ticket.createdAt ? new Date(ticket.createdAt).toLocaleTimeString() : ""}</span>
+                    </td>
+                    <td className="px-4 py-2">
+                      <div className="flex gap-2 justify-center">
+                        <Button variant="outline" size="sm" onClick={() => handleAssign(ticket._id || ticket.id)} title="Assign">
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => handleUpdateStatus(ticket._id || ticket.id)} title="Update status">
+                          <Book className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

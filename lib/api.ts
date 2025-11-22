@@ -11,6 +11,19 @@ class ApiClient {
   async getCurrentUserProfile() {
     return this.request('/users/me/profile')
   }
+    // Approve a pending shop
+    async approveShop(id: string) {
+      return this.request(`/shops/${id}/approve`, {
+        method: 'PATCH',
+      });
+    }
+
+    // Reject a pending shop
+    async rejectShop(id: string) {
+      return this.request(`/shops/${id}/reject`, {
+        method: 'PATCH',
+      });
+    }
     // Assign ticket to agent (admin only)
     async assignTicket(id: string, agentId: string) {
       return this.request(`/tickets/${id}/assign`, {

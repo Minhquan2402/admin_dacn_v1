@@ -6,6 +6,7 @@ import {
   BookOpen,
   Bot,
   Command,
+  MessageCircleMore,
   Frame,
   GalleryVerticalEnd,
   Map,
@@ -68,6 +69,10 @@ const data = {
       title: "Shops",
       url: "/admin/shops",
       icon: Store,
+      items: [
+        { title: "All shops", url: "/admin/shops" },
+        { title: "Shop owner requests", url: "/admin/shops/register-requests" },
+      ],
     },
     {
       title: "Products",
@@ -103,6 +108,11 @@ const data = {
       title: "Tickets",
       url: "/admin/tickets",
       icon: Command,
+    },
+    {
+      title: "Support chats",
+      url: "/admin/support-chats",
+      icon: MessageCircleMore,
     },
   ],
   projects: [

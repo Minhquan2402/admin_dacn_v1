@@ -42,11 +42,27 @@ class ApiClient {
         method: 'PATCH',
       });
     }
+
+    async getRegisterShopOwnerRequests(params?: { status?: 'pending' | 'approved' | 'rejected'; page?: number; limit?: number }) {
+      const query = new URLSearchParams();
+      if (params?.status) query.append('status', params.status);
+      if (params?.page) query.append('page', params.page.toString());
+      if (params?.limit) query.append('limit', params.limit.toString());
+      const qs = query.toString();
+      return this.request(`/register-shop-owner${qs ? `?${qs}` : ''}`);
+    }
+
+    async reviewRegisterShopOwnerRequest(id: string, payload: { status: 'approved' | 'rejected'; reviewMessage?: string }) {
+      return this.request(`/register-shop-owner/${id}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      });
+    }
     // Assign ticket to agent (admin only)
-    async assignTicket(id: string, agentId: string) {
+    async assignTicket(id: string, assignedTo: string) {
       return this.request(`/tickets/${id}/assign`, {
         method: 'PATCH',
-        body: JSON.stringify({ agentId }),
+        body: JSON.stringify({ assignedTo }),
       });
     }
 
@@ -66,6 +82,36 @@ class ApiClient {
     // Tickets API
     async getTickets() {
       return this.request('/tickets');
+    }
+
+    async getSupportChatThreads(params?: { search?: string; limit?: number; offset?: number }) {
+      const query = new URLSearchParams();
+      if (params?.search) query.append('search', params.search);
+      if (typeof params?.limit === 'number') query.append('limit', String(params.limit));
+      if (typeof params?.offset === 'number') query.append('offset', String(params.offset));
+      const qs = query.toString();
+      const result = await this.request(`/support/chat/threads${qs ? `?${qs}` : ''}`);
+      return result?.data ?? result;
+    }
+
+    async getSupportChatThreadByUser(userId: string) {
+      const result = await this.request(`/support/chat/threads/${userId}`);
+      return result?.data ?? result;
+    }
+
+    async sendSupportChatMessageToUser(userId: string, content: string) {
+      const result = await this.request(`/support/chat/threads/${userId}/messages`, {
+        method: 'POST',
+        body: JSON.stringify({ content }),
+      });
+      return result?.data ?? result;
+    }
+
+    async markSupportChatThreadReadByAdmin(userId: string) {
+      const result = await this.request(`/support/chat/threads/${userId}/read`, {
+        method: 'PATCH',
+      });
+      return result?.data ?? result;
     }
   // Upload product images (multipart/form-data)
   async uploadProductImages(productId: string, formDataImg: FormData) {

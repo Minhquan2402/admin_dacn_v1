@@ -85,11 +85,6 @@ const data = {
       icon: ShoppingCart,
     },
     {
-      title: "Analytics",
-      url: "/admin/analytics",
-      icon: BarChart3,
-    },
-    {
       title: "Vouchers",
       url: "/admin/vouchers",
       icon: Bot,
@@ -115,23 +110,7 @@ const data = {
       icon: MessageCircleMore,
     },
   ],
-  projects: [
-    {
-      name: "Design Engineering",
-      url: "#",
-      icon: Frame,
-    },
-    {
-      name: "Sales & Marketing",
-      url: "#",
-      icon: PieChart,
-    },
-    {
-      name: "Travel",
-      url: "#",
-      icon: Map,
-    },
-  ],
+  // projects removed
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -142,7 +121,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        {/* <NavProjects projects={data.projects} /> */}
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />

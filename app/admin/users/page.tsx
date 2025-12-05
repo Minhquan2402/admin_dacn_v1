@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import toast, { Toaster } from "react-hot-toast"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -30,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Search, Plus, Edit, Trash2, UserPlus } from "lucide-react"
+import { Search, Plus, Edit, Lock, Unlock, UserPlus } from "lucide-react"
 import { apiClient } from "@/lib/api"
 
 interface User {
@@ -41,10 +42,21 @@ interface User {
   role: string
   isVerified: boolean
   createdAt: string
+  locked?: boolean
 }
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([])
+    // Xử lý khóa/mở khóa tài khoản
+    const handleLockUser = async (userId: string, locked: boolean) => {
+      console.log('Lock user click:', userId, locked);
+      try {
+        await apiClient.lockUser(userId, locked)
+        fetchUsers()
+      } catch (error) {
+        console.error('Failed to lock/unlock user:', error)
+      }
+    }
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
@@ -153,18 +165,19 @@ export default function UsersPage() {
     e.preventDefault()
     try {
       if (editingUser) {
-        // Update user
         await apiClient.updateUser(editingUser.id, formData)
         setIsEditModalOpen(false)
+        toast.success("Cập nhật user thành công!")
       } else {
-        // Add new user (call /auth/register)
         const { userName, email, phone, role, password } = formData;
         await apiClient.registerUser({ userName, email, phone, role, password });
         setIsAddModalOpen(false)
+        toast.success("Thêm user mới thành công!")
       }
       fetchUsers()
     } catch (error) {
       console.error('Failed to save user:', error)
+      toast.error("Có lỗi xảy ra, vui lòng thử lại!")
       // For demo, update local state
       if (editingUser) {
         setUsers(users.map(user =>
@@ -187,6 +200,8 @@ export default function UsersPage() {
   }
 
   return (
+    <>
+      <Toaster position="top-right" />
     <div className="flex-1 space-y-4 p-8 pt-6">
       <div className="flex items-center justify-between">
         <div>
@@ -233,6 +248,7 @@ export default function UsersPage() {
                   <TableHead>Phone</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Locked</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -269,6 +285,11 @@ export default function UsersPage() {
                         </Badge>
                       </TableCell>
                       <TableCell>
+                        <Badge variant={user.locked ? 'destructive' : 'default'}>
+                          {user.locked ? 'Locked' : 'Active'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
                         {new Date(user.createdAt).toLocaleDateString()}
                       </TableCell>
                       <TableCell className="text-right">
@@ -276,9 +297,17 @@ export default function UsersPage() {
                           <Button variant="outline" size="sm" onClick={() => handleEditUser(user)}>
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="outline" size="sm" onClick={() => handleDeleteUser(user.id)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          {user.role !== 'admin' && (
+                            user.locked ? (
+                              <Button variant="default" size="sm" onClick={() => handleLockUser(user.id, false)} title="Mở khóa tài khoản">
+                                <Unlock className="h-4 w-4" />
+                              </Button>
+                            ) : (
+                              <Button variant="destructive" size="sm" onClick={() => handleLockUser(user.id, true)} title="Khóa tài khoản">
+                                <Lock className="h-4 w-4" />
+                              </Button>
+                            )
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -466,5 +495,6 @@ export default function UsersPage() {
         </DialogContent>
       </Dialog>
     </div>
+    </>
   )
 }

@@ -153,7 +153,6 @@ export default function CategoriesPage() {
             {category.isActive ? 'Active' : 'Inactive'}
           </Badge>
         </TableCell>
-        <TableCell>{category.productCount}</TableCell>
         <TableCell>
           {new Date(category.createdAt).toLocaleDateString()}
         </TableCell>
@@ -286,7 +285,6 @@ export default function CategoriesPage() {
                   <TableHead>English Name</TableHead>
                   <TableHead>Description</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Products</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -294,13 +292,13 @@ export default function CategoriesPage() {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center">
+                    <TableCell colSpan={6} className="text-center">
                       Loading...
                     </TableCell>
                   </TableRow>
                 ) : filteredCategories.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center">
+                    <TableCell colSpan={6} className="text-center">
                       No categories found
                     </TableCell>
                   </TableRow>

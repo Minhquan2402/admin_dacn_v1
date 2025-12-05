@@ -1,5 +1,12 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
 class ApiClient {
+            // Khóa hoặc mở khóa tài khoản người dùng (chỉ admin)
+            async lockUser(id: string, isLocked: boolean) {
+              return this.request(`/users/${id}/lock`, {
+                method: 'PATCH',
+                body: JSON.stringify({ isLocked }),
+              });
+            }
         // Issue voucher to a specific user (admin only)
         async issueVoucherToUser(voucherId: string, userId: string) {
           return this.request(`/vouchers/${voucherId}/issue`, {
@@ -308,18 +315,39 @@ class ApiClient {
     if (params?.status) query.append('status', params.status)
     if (params?.search) query.append('search', params.search)
 
-    return this.request(`/orders?${query}`)
+    // Lấy managerId từ localStorage (giả sử lưu userId admin ở key 'admin_user_id')
+    let managerId = ''
+    try {
+      managerId = localStorage.getItem('admin_user_id') || ''
+    } catch {}
+    // Nếu chưa có, thử lấy từ token hoặc context (tùy hệ thống)
+    const managerIdParam = managerId ? `managerId=${managerId}&` : ''
+    return this.request(`/users/me/manage/orders?${managerIdParam}${query}`)
   }
 
   async getOrderById(id: string) {
     return this.request(`/orders/${id}`)
   }
 
-  async updateOrderStatus(id: string, status: string) {
-    return this.request(`/orders/${id}/status`, {
-      method: 'PUT',
-      body: JSON.stringify({ status }),
-    })
+  async updateOrderStatus(id: string, status: string, note: string = '') {
+  return this.request(`/orders/${id}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({
+      status,
+      note,
+      changedBy: 'admin'
+    }),
+  })
+}
+
+  // Thêm API lấy tất cả đơn hàng (cho admin)
+  async getAllOrders(params?: { page?: number; limit?: number; status?: string; search?: string }) {
+    const query = new URLSearchParams();
+    if (params?.page) query.append('page', params.page.toString());
+    if (params?.limit) query.append('limit', params.limit.toString());
+    if (params?.status) query.append('status', params.status);
+    if (params?.search) query.append('search', params.search);
+    return this.request(`/orders?${query}`);
   }
 
   // Auth API

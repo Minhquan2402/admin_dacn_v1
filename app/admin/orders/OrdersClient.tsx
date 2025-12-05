@@ -3,14 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -35,20 +28,21 @@ import { apiClient } from "@/lib/api"
 
 interface Order {
   id: string
-  user: {
-    id: string
+  _id?: string
+  userId: {
+    _id: string
     userName: string
     email: string
   }
   items: Array<{
-    product: {
-      id: string
-      name: string
-    }
-    quantity: number
-    price: number
+    productId: string;
+    productName: string;
+    productImage?: string;
+    quantity: number;
+    price: number;
+    subtotal?: number;
   }>
-  totalAmount: number
+  total: number
   status: 'pending' | 'confirmed' | 'preparing' | 'shipping' | 'delivered' | 'cancelled'
   paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded'
   createdAt: string
@@ -90,128 +84,91 @@ export default function OrdersClient() {
     paymentStatus: 'pending' as Order['paymentStatus'],
     notes: '',
   })
-
   useEffect(() => {
-    fetchOrders()
-  }, [currentPage, searchTerm, statusFilter])
+    fetchOrders();
+  }, [currentPage, searchTerm, statusFilter]);
 
   const fetchOrders = async () => {
+    setLoading(true);
     try {
-      setLoading(true)
-      const response = await apiClient.getOrders({
+      const response = await apiClient.getAllOrders({
         page: currentPage,
         limit: 10,
         search: searchTerm,
         status: statusFilter && statusFilter !== 'all' ? statusFilter : undefined,
-      })
-      setOrders(response.data.orders || [])
-      setTotalPages(response.data.pagination?.totalPages || 1)
-    } catch (error) {
-      console.error('Failed to fetch orders:', error)
-      // Mock data for demo
-      setOrders([
-        {
-          id: 'ORD-001',
-          user: {
-            id: '1',
-            userName: 'Nguyễn Văn A',
-            email: 'nguyenvana@example.com'
-          },
-          items: [
-            {
-              product: { id: '1', name: 'Cà chua bi' },
-              quantity: 2,
-              price: 45000
-            }
-          ],
-          totalAmount: 90000,
-          status: 'pending',
-          paymentStatus: 'pending',
-          createdAt: '2025-01-15T10:00:00.000Z',
-          updatedAt: '2025-01-15T10:00:00.000Z',
-        },
-        {
-          id: 'ORD-002',
-          user: {
-            id: '2',
-            userName: 'Trần Thị B',
-            email: 'tranthib@example.com'
-          },
-          items: [
-            {
-              product: { id: '2', name: 'Bí ngòi' },
-              quantity: 1,
-              price: 35000
-            }
-          ],
-          totalAmount: 35000,
-          status: 'delivered',
-          paymentStatus: 'paid',
-          createdAt: '2025-01-14T14:30:00.000Z',
-          updatedAt: '2025-01-16T09:00:00.000Z',
-        }
-      ])
-      setTotalPages(1)
-    } finally {
-      setLoading(false)
+      });
+      const orders = response?.data?.orders || [];
+      console.log('DEBUG ORDERS:', orders);
+      setOrders(orders);
+      setTotalPages(response?.data?.pagination?.totalPages || 1);
+    } catch (error: any) {
+      if (error?.message?.includes('401') || error?.message?.includes('đăng nhập')) {
+        alert('Bạn cần đăng nhập để xem danh sách đơn hàng!');
+      } else {
+        alert('Không thể lấy danh sách đơn hàng!');
+      }
+      setOrders([]);
+      setTotalPages(1);
     }
-  }
+    setLoading(false);
+  };
 
-  const formatPrice = (price: number) => {
+  function formatPrice(price: number): string {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND'
-    }).format(price)
+    }).format(price);
   }
 
-  const handleStatusChange = async (orderId: string, newStatus: string) => {
+  async function handleStatusChange(orderId: string, newStatus: string) {
+    if (!orderId || orderId === "undefined") {
+      alert("Order ID không hợp lệ!");
+      return;
+    }
     try {
-      await apiClient.updateOrderStatus(orderId, newStatus)
-      // Refresh orders
-      fetchOrders()
+      await apiClient.updateOrderStatus(orderId, newStatus);
+      fetchOrders();
     } catch (error) {
-      console.error('Failed to update order status:', error)
-      // For demo, update locally
-      setOrders(orders.map(order =>
+      alert('Đổi trạng thái thất bại!');
+      console.error('Failed to update order status:', error);
+      setOrders(orders.map((order: Order) =>
         order.id === orderId
           ? { ...order, status: newStatus as Order['status'] }
           : order
-      ))
+      ));
     }
   }
 
-  const handleViewOrder = (order: Order) => {
-    setSelectedOrder(order)
-    setIsViewModalOpen(true)
+  function handleViewOrder(order: Order) {
+    setSelectedOrder(order);
+    setIsViewModalOpen(true);
   }
 
-  const handleEditOrder = (order: Order) => {
-    setSelectedOrder(order)
+  function handleEditOrder(order: Order) {
+    setSelectedOrder(order);
     setEditFormData({
       status: order.status,
       paymentStatus: order.paymentStatus,
       notes: '',
-    })
-    setIsEditModalOpen(true)
+    });
+    setIsEditModalOpen(true);
   }
 
-  const handleSubmitEditOrder = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!selectedOrder) return
-
+  async function handleSubmitEditOrder(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedOrder) return;
     try {
       // await apiClient.updateOrder(selectedOrder.id, editFormData)
-      setIsEditModalOpen(false)
-      fetchOrders()
+      setIsEditModalOpen(false);
+      fetchOrders();
     } catch (error) {
-      console.error('Failed to update order:', error)
-      // For demo, update locally
-      setOrders(orders.map(order =>
+      console.error('Failed to update order:', error);
+      setOrders(orders.map((order: Order) =>
         order.id === selectedOrder.id
           ? { ...order, ...editFormData }
           : order
-      ))
-      setIsEditModalOpen(false)
+      ));
+      setIsEditModalOpen(false);
     }
   }
 
@@ -276,37 +233,36 @@ export default function OrdersClient() {
               </TableHeader>
               <TableBody>
                 {loading ? (
-                  <TableRow>
+                  [<TableRow key="loading-row">
                     <TableCell colSpan={8} className="text-center">
                       Loading...
                     </TableCell>
-                  </TableRow>
+                  </TableRow>]
                 ) : orders.length === 0 ? (
-                  <TableRow>
+                  [<TableRow key="empty-row">
                     <TableCell colSpan={8} className="text-center">
                       No orders found
                     </TableCell>
-                  </TableRow>
+                  </TableRow>]
                 ) : (
-                  orders.map((order) => (
-                    <TableRow key={order.id}>
-                      <TableCell className="font-medium">{order.id}</TableCell>
+                  orders.map((order, idx) => (
+                    <TableRow key={order.id || order._id || idx}>
+                      <TableCell className="font-medium">{order.id || order._id}</TableCell>
                       <TableCell>
                         <div>
-                          <div className="font-medium">{order.user.userName}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {order.user.email}
-                          </div>
+                          <div className="font-medium">{order.userId?.userName ?? "Unknown User"}</div>
+                          <div className="text-sm text-muted-foreground">{order.userId?.email ?? "No email"}</div>
                         </div>
                       </TableCell>
                       <TableCell>
+                        {/* Nếu render danh sách item, cần key cho từng phần tử */}
                         {order.items.length} item{order.items.length > 1 ? 's' : ''}
                       </TableCell>
-                      <TableCell>{formatPrice(order.totalAmount)}</TableCell>
+                      <TableCell>{formatPrice(order.total)}</TableCell>
                       <TableCell>
                         <Select
                           value={order.status}
-                          onValueChange={(value) => handleStatusChange(order.id, value)}
+                          onValueChange={(value) => handleStatusChange((order.id || order._id) + '', value)}
                         >
                           <SelectTrigger className="w-[120px]">
                             <Badge variant={statusColors[order.status]}>
@@ -314,12 +270,12 @@ export default function OrdersClient() {
                             </Badge>
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="pending">Pending</SelectItem>
-                            <SelectItem value="confirmed">Confirmed</SelectItem>
-                            <SelectItem value="preparing">Preparing</SelectItem>
-                            <SelectItem value="shipping">Shipping</SelectItem>
-                            <SelectItem value="delivered">Delivered</SelectItem>
-                            <SelectItem value="cancelled">Cancelled</SelectItem>
+                            <SelectItem value="pending" key="pending">Pending</SelectItem>
+                            <SelectItem value="confirmed" key="confirmed">Confirmed</SelectItem>
+                            <SelectItem value="preparing" key="preparing">Preparing</SelectItem>
+                            <SelectItem value="shipping" key="shipping">Shipping</SelectItem>
+                            <SelectItem value="delivered" key="delivered">Delivered</SelectItem>
+                            <SelectItem value="cancelled" key="cancelled">Cancelled</SelectItem>
                           </SelectContent>
                         </Select>
                       </TableCell>
@@ -335,9 +291,6 @@ export default function OrdersClient() {
                         <div className="flex justify-end space-x-2">
                           <Button variant="outline" size="sm" onClick={() => handleViewOrder(order)}>
                             <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => handleEditOrder(order)}>
-                            <Edit className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>
@@ -390,8 +343,8 @@ export default function OrdersClient() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-sm font-medium">Customer</Label>
-                  <p className="text-sm">{selectedOrder.user.userName}</p>
-                  <p className="text-sm text-muted-foreground">{selectedOrder.user.email}</p>
+                  <p className="text-sm">{selectedOrder.userId?.userName ?? "Unknown User"}</p>
+                  <p className="text-sm text-muted-foreground">{selectedOrder.userId?.email ?? "No email"}</p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium">Order Date</Label>
@@ -425,17 +378,17 @@ export default function OrdersClient() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {selectedOrder.items.map((item, index) => (
-                        <TableRow key={index}>
-                          <TableCell>{item.product.name}</TableCell>
+                      {selectedOrder.items.map((item, idx) => (
+                        <TableRow key={item.productId || idx}>
+                          <TableCell>{item.productName || "Unknown Product"}</TableCell>
                           <TableCell className="text-center">{item.quantity}</TableCell>
                           <TableCell className="text-right">{formatPrice(item.price)}</TableCell>
-                          <TableCell className="text-right">{formatPrice(item.price * item.quantity)}</TableCell>
+                          <TableCell className="text-right">{formatPrice(item.subtotal ?? item.price * item.quantity)}</TableCell>
                         </TableRow>
                       ))}
-                      <TableRow>
+                      <TableRow key="order-total-row">
                         <TableCell colSpan={3} className="text-right font-medium">Total Amount:</TableCell>
-                        <TableCell className="text-right font-bold">{formatPrice(selectedOrder.totalAmount)}</TableCell>
+                        <TableCell className="text-right font-bold">{formatPrice(selectedOrder.total)}</TableCell>
                       </TableRow>
                     </TableBody>
                   </Table>

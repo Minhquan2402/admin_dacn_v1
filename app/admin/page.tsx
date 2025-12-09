@@ -1,8 +1,25 @@
+"use client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useEffect, useState } from "react"
 import { Overview } from "@/components/overview"
 import { RecentSales } from "@/components/recent-sales"
+import { apiClient } from "@/lib/api"
 
 export default function AdminDashboard() {
+  const [stats, setStats] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    apiClient.getDashboardStats().then((res) => {
+      setStats(res)
+      setLoading(false)
+    })
+  }, [])
+
+  if (loading) {
+    return <div className="p-8">Đang tải dữ liệu...</div>
+  }
+
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
@@ -11,28 +28,20 @@ export default function AdminDashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Revenue
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$45,231.89</div>
-            <p className="text-xs text-muted-foreground">
-              +20.1% from last month
-            </p>
+            <div className="text-2xl font-bold">${stats?.totalRevenue?.toLocaleString() ?? '-'}</div>
+            <p className="text-xs text-muted-foreground">{stats?.revenueChange ?? ''}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Subscriptions
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Subscriptions</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+2350</div>
-            <p className="text-xs text-muted-foreground">
-              +180.1% from last month
-            </p>
+            <div className="text-2xl font-bold">+{stats?.subscriptions ?? '-'}</div>
+            <p className="text-xs text-muted-foreground">{stats?.subscriptionsChange ?? ''}</p>
           </CardContent>
         </Card>
         <Card>
@@ -40,23 +49,17 @@ export default function AdminDashboard() {
             <CardTitle className="text-sm font-medium">Sales</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+12,234</div>
-            <p className="text-xs text-muted-foreground">
-              +19% from last month
-            </p>
+            <div className="text-2xl font-bold">+{stats?.sales ?? '-'}</div>
+            <p className="text-xs text-muted-foreground">{stats?.salesChange ?? ''}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Active Now
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Active Now</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+573</div>
-            <p className="text-xs text-muted-foreground">
-              +201 since last hour
-            </p>
+            <div className="text-2xl font-bold">+{stats?.activeNow ?? '-'}</div>
+            <p className="text-xs text-muted-foreground">{stats?.activeNowChange ?? ''}</p>
           </CardContent>
         </Card>
       </div>
@@ -66,18 +69,18 @@ export default function AdminDashboard() {
             <CardTitle>Overview</CardTitle>
           </CardHeader>
           <CardContent className="pl-2">
-            <Overview />
+            <Overview data={stats?.overview ?? []} />
           </CardContent>
         </Card>
         <Card className="col-span-3">
           <CardHeader>
             <CardTitle>Recent Sales</CardTitle>
             <CardDescription>
-              You made 265 sales this month.
+              You made {stats?.recentSalesCount ?? '-'} sales this month.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <RecentSales />
+            <RecentSales data={stats?.recentSales ?? []} />
           </CardContent>
         </Card>
       </div>

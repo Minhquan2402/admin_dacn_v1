@@ -70,7 +70,6 @@ const data = {
       url: "/admin/shops",
       icon: Store,
       items: [
-        { title: "All shops", url: "/admin/shops" },
         { title: "Shop owner requests", url: "/admin/shops/register-requests" },
       ],
     },
@@ -94,11 +93,7 @@ const data = {
       url: "/admin/violations",
       icon: Bell,
     },
-    {
-      title: "Quản lý livestream",
-      url: "/admin/livestreams",
-      icon: AudioWaveform,
-    },
+
     {
       title: "Tickets",
       url: "/admin/tickets",

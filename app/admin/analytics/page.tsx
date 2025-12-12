@@ -44,9 +44,7 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">328,000 VND</div>
-            <p className="text-xs text-muted-foreground">
-              +12.5% from last month
-            </p>
+              {/* ...existing code... */}
           </CardContent>
         </Card>
         <Card>
@@ -55,9 +53,7 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">1,247</div>
-            <p className="text-xs text-muted-foreground">
-              +8.2% from last month
-            </p>
+              {/* ...existing code... */}
           </CardContent>
         </Card>
         <Card>
@@ -66,9 +62,7 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">892</div>
-            <p className="text-xs text-muted-foreground">
-              +15.3% from last month
-            </p>
+              {/* ...existing code... */}
           </CardContent>
         </Card>
         <Card>
@@ -77,9 +71,7 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">263 VND</div>
-            <p className="text-xs text-muted-foreground">
-              +5.1% from last month
-            </p>
+              {/* ...existing code... */}
           </CardContent>
         </Card>
       </div>

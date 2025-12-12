@@ -32,7 +32,7 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">${stats?.totalRevenue?.toLocaleString() ?? '-'}</div>
-            <p className="text-xs text-muted-foreground">{stats?.revenueChange ?? ''}</p>
+              {/* ...existing code... */}
           </CardContent>
         </Card>
         <Card>
@@ -41,7 +41,7 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">+{stats?.subscriptions ?? '-'}</div>
-            <p className="text-xs text-muted-foreground">{stats?.subscriptionsChange ?? ''}</p>
+              {/* ...existing code... */}
           </CardContent>
         </Card>
         <Card>
@@ -50,7 +50,7 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">+{stats?.sales ?? '-'}</div>
-            <p className="text-xs text-muted-foreground">{stats?.salesChange ?? ''}</p>
+              {/* ...existing code... */}
           </CardContent>
         </Card>
         <Card>
@@ -59,7 +59,7 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">+{stats?.activeNow ?? '-'}</div>
-            <p className="text-xs text-muted-foreground">{stats?.activeNowChange ?? ''}</p>
+              {/* ...existing code... */}
           </CardContent>
         </Card>
       </div>

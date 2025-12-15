@@ -55,18 +55,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     setIsLoading(true)
     try {
-      // Gọi API đăng nhập backend
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      // Ensure NEXT_PUBLIC_API_URL is configured on production
+      const publicApi = process.env.NEXT_PUBLIC_API_URL || '';
+      if (process.env.NODE_ENV === 'production' && !publicApi) {
+        throw new Error('Server API URL not configured. Set NEXT_PUBLIC_API_URL to your backend URL in Vercel env vars.');
+      }
+
+      const apiBase = (publicApi || 'http://localhost:5000/api').replace(/\/$/, '');
+      const url = `${apiBase}/auth/login`;
+
+      const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       })
-      if (!response.ok) throw new Error('Login failed')
+      if (!response.ok) {
+        const body = await response.text().catch(() => '')
+        throw new Error(body || 'Login failed')
+      }
+
       const result = await response.json()
-      // Lưu token thật
-      localStorage.setItem('admin_token', result.accessToken)
-      localStorage.setItem('admin_refresh_token', result.refreshToken)
-      setUser(result.user)
+
+      // Lưu token thật (backend trả accessToken/refreshToken)
+      if (result.accessToken) localStorage.setItem('admin_token', result.accessToken)
+      if (result.refreshToken) localStorage.setItem('admin_refresh_token', result.refreshToken)
+      if (result.user) setUser(result.user)
     } catch (error) {
       throw new Error('Login failed')
     } finally {

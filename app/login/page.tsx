@@ -8,6 +8,9 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useAuth } from "@/contexts/auth-context"
+import dynamic from 'next/dynamic'
+
+const AdminApiDebug = dynamic(() => import('@/components/AdminApiDebug'), { ssr: false })
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -24,13 +27,17 @@ export default function LoginPage() {
       await login(email, password)
       router.push("/admin")
     } catch (err) {
-      setError("Invalid email or password")
+      if (err instanceof Error) setError(err.message)
+      else setError('Invalid email or password')
     }
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
+        <div className="px-6 pt-6">
+          <AdminApiDebug />
+        </div>
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl text-center">Admin Login</CardTitle>
           <CardDescription className="text-center">

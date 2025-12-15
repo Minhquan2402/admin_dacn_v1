@@ -188,10 +188,11 @@ class ApiClient {
     let response: Response
     try {
       response = await fetch(url, config)
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Network errors (server down, CORS, etc.)
       console.error('Network request failed:', err)
-      throw new Error(`Network request failed: ${err?.message ?? String(err)}`)
+      if (err instanceof Error) throw new Error(`Network request failed: ${err.message}`)
+      throw new Error(`Network request failed: ${String(err)}`)
     }
 
     if (!response.ok) {

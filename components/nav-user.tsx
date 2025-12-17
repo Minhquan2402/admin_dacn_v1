@@ -54,8 +54,11 @@ export function NavUser({ user }: { user?: { name: string; email: string; avatar
             avatar: res.data.avatar || "",
           })
         }
-      } catch {
+      } catch (err: unknown) {
+        // fallback profile on error
         setProfile({ name: "Admin", email: "admin@example.com", avatar: "" })
+        if (err instanceof Error) console.error('Failed fetch profile:', err.message)
+        else console.error('Failed fetch profile:', String(err))
       }
     }
     fetchProfile()
@@ -70,8 +73,9 @@ export function NavUser({ user }: { user?: { name: string; email: string; avatar
     formData.append("avatar", file)
     try {
       // Gọi API upload avatar (ví dụ: /uploads/avatar hoặc /upload)
-      // Đổi endpoint cho đúng backend nếu cần
-      const res = await fetch("http://localhost:5000/api/users/me/avatar", {
+      // Use NEXT_PUBLIC_API_URL if provided (so it works on Vercel)
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
+      const res = await fetch(`${apiBase}/users/me/avatar`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${localStorage.getItem('admin_token') || ''}`
@@ -82,8 +86,10 @@ export function NavUser({ user }: { user?: { name: string; email: string; avatar
       if (data.success && data.url) {
         setEditData(ed => ({ ...ed, avatar: data.url }))
       }
-    } catch {
+    } catch (err: unknown) {
       setErrorMsg("Upload avatar thất bại")
+      if (err instanceof Error) console.error('Avatar upload failed:', err.message)
+      else console.error('Avatar upload failed:', String(err))
     }
   }
 

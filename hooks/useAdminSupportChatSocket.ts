@@ -15,7 +15,9 @@ interface SocketOptions {
 
 const getSocketUrl = () => {
   const envUrl = process.env.NEXT_PUBLIC_SOCKET_URL || process.env.NEXT_PUBLIC_API_URL;
-  return envUrl ? envUrl.replace(/\/$/, '') : 'http://localhost:5000';
+  if (envUrl) return envUrl.replace(/\/$/, '');
+  if (typeof window !== 'undefined') return window.location.origin.replace(/\/$/, '');
+  return 'http://localhost:5000';
 };
 
 export const useAdminSupportChatSocket = ({ adminId, onMessage, onThreadUpdate, onStatusChange }: SocketOptions) => {

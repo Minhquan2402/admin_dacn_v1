@@ -55,18 +55,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     setIsLoading(true)
     try {
-      // Gọi API đăng nhập backend
-      const response = await fetch('http://localhost:5000/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      })
-      if (!response.ok) throw new Error('Login failed')
-      const result = await response.json()
-      // Lưu token thật
-      localStorage.setItem('admin_token', result.accessToken)
-      localStorage.setItem('admin_refresh_token', result.refreshToken)
-      setUser(result.user)
+      // Use ApiClient which picks up NEXT_PUBLIC_API_URL or defaults to localhost
+      const result = await (await import('@/lib/api')).apiClient.login(email, password)
+      if (!result) throw new Error('Login failed')
+      // apiClient.login will store the token in localStorage if present; set user from response
+      if (result.user) setUser(result.user)
     } catch (error) {
       throw new Error('Login failed')
     } finally {

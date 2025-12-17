@@ -65,8 +65,9 @@ export default function VouchersPage() {
       setForm({ code: '', type: 'fixed', value: '', startsAt: '', expiresAt: '' });
       setFixedValue('');
       setPercentValue('');
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Không hợp lệ, không làm gì cả
+      // If we ever want to log: if (err instanceof Error) console.error(err.message)
     }
   }
 
@@ -83,8 +84,9 @@ export default function VouchersPage() {
       setIssueResult('Cấp phát voucher thành công!');
       setIssueUserId('');
       setIssueVoucherId('');
-    } catch (err: any) {
-      setIssueError('Cấp phát voucher thất bại');
+    } catch (err: unknown) {
+      if (err instanceof Error) setIssueError(err.message || 'Cấp phát voucher thất bại');
+      else setIssueError(String(err) || 'Cấp phát voucher thất bại');
     }
   }
 

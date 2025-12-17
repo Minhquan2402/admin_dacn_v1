@@ -25,12 +25,14 @@ const PendingShopsPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('http://localhost:5000/api/shops');
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
+      const res = await fetch(`${apiBase}/shops`);
       if (!res.ok) throw new Error('Failed to fetch');
       const data = await res.json();
       setShops(data.data || []);
-    } catch (err: any) {
-      setError(err.message || 'Error fetching data');
+    } catch (err: unknown) {
+      if (err instanceof Error) setError(err.message || 'Error fetching data');
+      else setError(String(err) || 'Error fetching data');
     } finally {
       setLoading(false);
     }
@@ -46,8 +48,9 @@ const PendingShopsPage: React.FC = () => {
     try {
       await apiClient.approveShop(id);
       await fetchShops();
-    } catch (err: any) {
-      alert('Approve failed: ' + (err?.message || 'Error'));
+    } catch (err: unknown) {
+      if (err instanceof Error) alert('Approve failed: ' + err.message);
+      else alert('Approve failed: ' + String(err));
     } finally {
       setActionLoading(null);
     }
@@ -58,8 +61,9 @@ const PendingShopsPage: React.FC = () => {
     try {
       await apiClient.rejectShop(id);
       await fetchShops();
-    } catch (err: any) {
-      alert('Reject failed: ' + (err?.message || 'Error'));
+    } catch (err: unknown) {
+      if (err instanceof Error) alert('Reject failed: ' + err.message);
+      else alert('Reject failed: ' + String(err));
     } finally {
       setActionLoading(null);
     }

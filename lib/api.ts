@@ -188,10 +188,11 @@ class ApiClient {
     let response: Response
     try {
       response = await fetch(url, config)
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Network errors (server down, CORS, etc.)
       console.error('Network request failed:', err)
-      throw new Error(`Network request failed: ${err?.message ?? String(err)}`)
+      if (err instanceof Error) throw new Error(`Network request failed: ${err.message}`)
+      throw new Error(`Network request failed: ${String(err)}`)
     }
 
     if (!response.ok) {
@@ -356,16 +357,21 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     })
+      const accessToken = response.accessToken || response.token
+      if (accessToken) {
+        localStorage.setItem('admin_token', accessToken)
+      }
 
-    if (response.token) {
-      localStorage.setItem('admin_token', response.token)
-    }
+      if (response.refreshToken) {
+        localStorage.setItem('admin_refresh_token', response.refreshToken)
+      }
 
     return response
   }
 
   async logout() {
     localStorage.removeItem('admin_token')
+      localStorage.removeItem('admin_refresh_token')
   }
 
   // Dashboard stats
